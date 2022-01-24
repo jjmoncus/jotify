@@ -2,17 +2,16 @@
 library(spotifyr)
 
 
+# client ID and client secret defined elsewhere
+# same with spotify_id
+access_token <- get_spotify_access_token(client_id = client_id,
+                                         client_secret = client_secret)
+auth_code <- get_spotify_authorization_code(client_id = client_id,
+                                            client_secret = client_secret)
 
-id <- "f3c7070d893f4c3480176c8bdfc5e6d9"
-secret <- "0b73daa97da84b2ab7ac0eba8b174f85"
+# my_plists <- get_user_playlists(spotify_id,
+#                                 authorization = auth_code)
 
-access_token <- get_spotify_access_token(client_id = id,
-                                         client_secret = secret)
-auth_code <- 
-
-
-get_my_profile(access_token)
-
-
-
+# Get the Weeknd's albums
+get_artist_albums('1Xyo4u8uXC1ZmMpatF05PJ')
 

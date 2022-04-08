@@ -84,11 +84,11 @@ analysis_for_merge <- analysis %>%
 # inter %>% distinct()
 
 
-df <- recently_played_small %>%
+recently_played_small %>%
   left_join(features, by = "track.name") %>%
   left_join(analysis_for_merge, by = "track.name") %>%
   # for reasons I dont understand, we get duplicate rows here - cutting them resolves
-  distinct()
+  distinct() %>%
+  save(file = "state/final_data.RData")
 
 # this is the df we will use for analysis
-

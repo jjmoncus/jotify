@@ -1,6 +1,6 @@
 
-library(spotifyr)
 library(tidyverse)
+library(spotifyr)
 library(lubridate)
 library(glue)
 
@@ -20,115 +20,75 @@ View(recently_played)
 recently_played_small <- recently_played %>%
   mutate(artist.name = map_chr(track.artists, function(x) x$name[1]),
          played_at = as_datetime(played_at)) %>% 
-  select(track.name, artist.name, track.album.name, played_at) %>%
+  select(track.id, track.name, artist.name, track.album.name, played_at) %>%
   mutate(track.name = gsub("[\u2018\u2019\u201A\u201B\u2032\u2035]", "'", track.name)) %>%
   mutate(artist.name = gsub("[\u2018\u2019\u201A\u201B\u2032\u2035]", "'", artist.name))
 
-# set up a search string to pass to Genius API
-song_search_strings <- recently_played_small %>%
-  mutate(song_search_string = glue("'{track.name}' by {artist.name}")) %>%
-  pull(song_search_string)
+features <- recently_played_small$track.id %>%
+  set_names(nm = ~recently_played_small %>% filter(track.id == .x) %>% pull(track.name)) %>%
+  map_dfr(~get_track_audio_features(id = .x),
+          .id = "track.name")
 
-# pass search string to Genius API
-song_info <- song_search_strings %>%
-  purrr::set_names() %>%
-  imap(~.x %>%
-         search_song(search_term = .,
-                     n = 50)
-  )
+View(features)
 
+analysis <- recently_played_small$track.id %>%
+  set_names(nm = ~recently_played_small %>% filter(track.id == .x) %>% pull(track.name)) %>%
+  map(~get_track_audio_analysis(id = .x))
 
-searches_with_no_genius_data <- song_info %>% map_lgl(~is_empty(.x)) %>% Filter(f = function(x) x) %>% names()
-searches_with_genius_data <- base::setdiff(names(song_info), searches_with_no_genius_data)
+# more human-readable display
+analysis <- analysis %>% 
+  map(.f = function(x) {
+    map(x, .f = function(y) {
+      as_tibble(y)
+      })
+    })
 
-# preprocessing Genius data - coerce all weird apostrophes to normal apostrophes in coluns we care about
-song_info <- song_info %>%
-  .[c(searches_with_genius_data)] %>%
-  map(~.x %>%
-        mutate(song_name = gsub("[\u2018\u2019\u201A\u201B\u2032\u2035]", "'", song_name)) %>%
-        mutate(artist_name = gsub("[\u2018\u2019\u201A\u201B\u2032\u2035]", "'", artist_name)))
+# did analysis go okay for all songs?
+all_went_well <- analysis %>%
+  map_dbl(~.x %>%
+        pluck("meta") %>%
+          #status_code of 0 = no problems
+        pull(status_code)
+      ) %>%
+  as.logical() %>%
+  any() %>%
+  `!`(.)
 
-# filtering just on artist name
-song_info %>%
-  imap(~.x %>%
-         select(-song_lyrics_url) %>%
-         # filter down to searches where artist name in Genius data matches artist name from Spotify
-         filter(
-           str_detect(artist_name,
-                      regex(pattern = str_extract(.y,
-                                                  pattern = regex("(?<=by\\s).*",
-                                                                  ignore_case = TRUE)),
-                            ignore_case = TRUE))
-         )
-  )
+# squashing list items into list columns for merge
+analysis_for_merge <- analysis %>% 
+  map_dfr(~tibble(meta = list(.x$meta),
+              track = list(.x$track),
+              bars = list(.x$bars),
+              beats = list(.x$beats),
+              sections = list(.x$sections),
+              segments = list(.x$segments),
+              tatums = list(.x$tatums)),
+          .id = "track.name")
 
-
-# song titles from Spotify frequently include metadata about the song in parenthesis
-# e.g. "Song name (ft. featured artist)
-# e.g. "Song name (Remix) (feat. featured artist)
-# e.g. "Song name (with featured artist)
-# we want to flter on song name, but only based on root song name and not attached metadata
-
-# filtering on both artist name and song name, accounting for metadata
-good_results <- song_info %>%
-  imap(~.x %>%
-         select(-song_lyrics_url) %>%
-         # filter down to searches where artist name in Genius data matches artist name from Spotify
-         filter(
-           str_detect(artist_name,
-                      regex(pattern = str_extract(.y,
-                                                  pattern = regex("(?<=by\\s).*",
-                                                                  ignore_case = TRUE)),
-                            ignore_case = TRUE))
-         ) %>%
-         filter(
-           str_detect(song_name,
-                      regex(pattern = str_extract(.y,
-                                                  pattern = "(?<=').*(?=')") %>%
-                              str_extract(pattern = "^[^\\(|\\-]+") %>%
-                              str_trim(side = "right"),
-                            ignore_case = TRUE))
-         )
-  )
-
-# some searches include poor results, i.e. results with no obviously good matches
-songs_with_no_good_results <- good_results %>% map_lgl(~.x %>% nrow() == 0) %>% which() %>% names()
-songs_to_get_lyrics <- base::setdiff(names(good_results), songs_with_no_good_results)
-
-# get ids for top result
-ids_for_lyrics <- good_results %>%
-  .[songs_to_get_lyrics] %>%
-  map(~.x %>%
-        # presume best result is the top one
-        slice(1) %>%
-        pull(song_id)
-  )
-
-# next steps - try to pull lyrics using confirmed song_ids
-
-
-# well, it looks like `geniusr::get_lyrics_id` is essenially
-# id %>% get_song() %>% pull song_lyrics_url %>% read_html(song_lyrics_url) without first asking if you open a session with Genius
-# gonna check this with polite
+# analysis_for_merge$track.name
+# 
+# # I have listened to LA FAMA three times
+# recently_played_small$track.name %>% Filter(f = function(x) str_detect(x, "LA FAMA")) %>% length()
+# check <- recently_played_small %>% filter(str_detect(track.name, "LA FAMA")) %>% select(track.name, played_at)
 # 
 # 
+# inter <- recently_played_small %>%
+#   left_join(features, by = "track.name")
 # 
-
-site <- song_info[[1]] %>% slice(1) %>% pull(song_lyrics_url)
-
-session <- bow(site,
-               user_agent = "J.J. Moncus")
-site_html <- scrape(session)
-
-html_nodes(site_html, ".lyrics p")
-html_nodes(site_html, ".header_with_cover_art-primary_info-title") %>% html_text()
-# I def do not know HTML/CSS well enough to parse this
-# back to the API
+# # the rows groups are indeed the same
+# inter %>% filter(str_detect(track.name, "LA FAMA")) %>%
+#   split(~played_at) %>%
+#   map(~identical(slice(.x,1), slice(.x, 2)) & 
+#         identical(slice(.x,1), slice(.x, 3)))
 # 
-# well, the Genius API does not allow lyrics to be displayed, but you search by them
-# 
-# and scraping lyrics from websites seems to violate licensing agreements
-# ugh.
+# inter %>% distinct()
 
 
+df <- recently_played_small %>%
+  left_join(features, by = "track.name") %>%
+  left_join(analysis_for_merge, by = "track.name") %>%
+  # for reasons I dont understand, we get duplicate rows here - cutting them resolves
+  distinct()
+
+# this is the df we will use for analysis
 

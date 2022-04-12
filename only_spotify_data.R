@@ -14,8 +14,6 @@ auth_code <- get_spotify_authorization_code()
 # recently played songs
 recently_played <- get_my_recently_played(limit = 50) %>% as_tibble()
 
-View(recently_played)
-
 # preprocess Spotify data - coerce all weird apostrophes to normal apostrophes in coluns we care about
 recently_played_small <- recently_played %>%
   mutate(artist.name = map_chr(track.artists, function(x) x$name[1]),
@@ -28,8 +26,6 @@ features <- recently_played_small$track.id %>%
   set_names(nm = ~recently_played_small %>% filter(track.id == .x) %>% pull(track.name)) %>%
   map_dfr(~get_track_audio_features(id = .x),
           .id = "track.name")
-
-View(features)
 
 analysis <- recently_played_small$track.id %>%
   set_names(nm = ~recently_played_small %>% filter(track.id == .x) %>% pull(track.name)) %>%
@@ -84,11 +80,12 @@ analysis_for_merge <- analysis %>%
 # inter %>% distinct()
 
 
-recently_played_small %>%
+final_data <- recently_played_small %>%
   left_join(features, by = "track.name") %>%
   left_join(analysis_for_merge, by = "track.name") %>%
   # for reasons I dont understand, we get duplicate rows here - cutting them resolves
-  distinct() %>%
-  save(file = "state/final_data.RData")
+  distinct()
 
-# this is the df we will use for analysis
+save(final_data, file = "state/final_data.RData")
+
+ # this is the df we will use for analysis

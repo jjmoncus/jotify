@@ -65,7 +65,9 @@ final_data %>%
 
 # chart for loudness looks dumb cuz all values are negative
 final_data %>%
-  jotify_hbar(energy)
+  jotify_hbar(loudness,
+              boundaries = c(-40, 0),
+              midpoint = -15)
 
 final_data %>%
   jotify_hbar(acousticness)
@@ -74,4 +76,13 @@ final_data %>%
   jotify_hbar(tempo,
               boundaries = c(min(final_data$tempo), max(final_data$tempo)),
               nudge_x = 20)
+
+
+
+
+
+# when do I tend to listen?
+# 
+# 
+# final_data$played_at
 

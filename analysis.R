@@ -75,7 +75,8 @@ final_data %>%
 final_data %>%
   jotify_hbar(tempo,
               boundaries = c(min(final_data$tempo), max(final_data$tempo)),
-              nudge_x = 20)
+              nudge_x = 20,
+              body_size = 8)
 
 
 

@@ -11,8 +11,8 @@ theme_jotify <- function(head_size = 12,
   
   basic_line <- element_line(color = "#A4A4A4", size = .2)
   
-  theme_bw(base_size = 9, base_family = family) %+replace%
-    theme(plot.title = element_text(family = family,
+  theme_bw(base_size = body_size, base_family = family) %+replace%
+    theme(title = element_text(family = family,
                                     size = head_size,
                                     margin =  margin(b=4, unit = "pt"),
                                     hjust = 0,
@@ -25,7 +25,7 @@ theme_jotify <- function(head_size = 12,
                                         hjust = 0, 
                                         vjust = 0
                                         ),
-          plot.caption =  element_text(family = family,
+          text =  element_text(family = family,
                                        size = body_size,
                                        color = "#7F7F7F",
                                        margin = margin(t = unit(5, "line")),
@@ -39,7 +39,6 @@ theme_jotify <- function(head_size = 12,
           
           # Set up facet labels
           strip.background =  element_blank(),
-          strip.text =  element_text(family = family, size = 8.5, face = "bold"),
         
           # Set up axes
           axis.line.x = if (x_axis) basic_line else element_blank(),

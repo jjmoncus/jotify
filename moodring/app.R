@@ -9,66 +9,118 @@
 
 library(shiny)
 
-# Define UI for application that draws a histogram
+# Define UI for application
 ui <- fluidPage(
-
+    
     # navbar at the top
     navbarPage("Real-time analysis of J.J.'s Spotify listening data",
-        tabPanel("Toplines features",
-                 
-                 # Page description
-                 titlePanel("Average features across an entire song"),
-                 
-                 sidebarLayout(
-                     # Sidebar with a multiple choice input for the feature to visualize 
-                     sidebarPanel(
-                         selectInput("feature",
-                                     label = "Feature:",
-                                     choices = c("danceability", "energy", "loudness", 
-                                                 "speechiness", "acousticness", "instrumentalness", 
-                                                 "liveness", "valence", "tempo"),
-                                     selected = "danceability",
-                                     multiple = FALSE),
-                         numericInput("body_size",
-                                      label = "Data label font size",
-                                      value = 9,
-                                      min = 1,
-                                      max = 20)
-                     ),
-                     # Show a plot of the generated distribution
-                     mainPanel(
-                         plotOutput("bars")
-                         )
-                     )
-                 ),
-        tabPanel("Overtime",
-                 
-                 # Page description
-                 titlePanel("How does 'loudness' change over the length of the song?"),
-                 
-                 sidebarLayout(
-                     sidebarPanel(
-                         # song names
-                         selectInput("song",
-                                     label = "Song:",
-                                     choices = unique(final_data$track.name),
-                                     multiple = FALSE)
+               
+               tabPanel("Recent highlights",
+                        
+                        fluidRow(
+                            column(width = 2),
+                            column(width = 8,
+                                   # Analysis description
+                                   titlePanel("The recent fav:")
+                                   ),
+                            column(width = 2)
+                            ),
+                        fluidRow(
+                            column(width = 2),
+                            column(width = 8,
+                                   imageOutput("recent_fav_image")
+                                   ),
+                            column(width = 2),
+                            ),
+                        fluidRow(
+                            column(width = 2),
+                            column(width = 8,
+                            textOutput("recent_fav_text")
+                            ),
+                            column(width = 2)  
+                            )
+                        ),
+               
+               tabPanel("Toplines features",
+                        
+                        # Page description
+                        titlePanel("Average features across an entire song"),
+                         
+                        sidebarLayout(
+                             # Sidebar with a multiple choice input for the feature to visualize 
+                             sidebarPanel(
+                                 selectInput("feature",
+                                             label = "Feature:",
+                                             choices = c("danceability", "energy", "loudness", 
+                                                         "speechiness", "acousticness", "instrumentalness", 
+                                                         "liveness", "valence", "tempo"),
+                                             selected = "danceability",
+                                             multiple = FALSE),
+                                 numericInput("body_size",
+                                              label = "Data label font size",
+                                              value = 9,
+                                              min = 1,
+                                              max = 20)
+                             ),
+                             # Show a plot of the generated distribution
+                             mainPanel(
+                                 plotOutput("bars")
+                                 )
+                             )
                          ),
-                     # Show a plot of the generated distribution
-                     mainPanel(
-                         plotOutput("loudness_overtime")
+                tabPanel("Overtime",
+                         
+                         # Page description
+                         titlePanel("How does 'loudness' change over the length of the song?"),
+                         
+                         sidebarLayout(
+                             sidebarPanel(
+                                 # song names
+                                 selectInput("song",
+                                             label = "Song:",
+                                             choices = unique(final_data$track.name),
+                                             multiple = FALSE)
+                                 ),
+                             # Show a plot of the generated distribution
+                             mainPanel(
+                                 plotOutput("loudness_overtime")
+                                 )
+                             )
+                         ),
+                tabPanel("About the author",
+                         
+                         htmlOutput("author_description")
                          )
-                     )
-                 ),
-        tabPanel("About the author",
-                 
-                 htmlOutput("author_description")
-                 )
         )
 )
 
-# Define server logic required to draw a histogram
+# Define server logic 
 server <- function(input, output) {
+    
+    most_played_song <- final_data %>% most_played_song_name()
+    most_played_song_artist <- final_data %>% most_played_song_artist()
+    
+    output$recent_fav_text <- renderText({
+        
+        glue("{double_quote(most_played_song)} by {most_played_song_artist}")
+    })
+    
+    output$recent_fav_image <- renderImage({
+        
+        # grab pic url
+        url <- most_played_song %>% pull_image_url(final_data,
+                                                   song_name = ., 
+                                                   size = "medium")
+        # render pic to jpg file
+        outfile <- tempfile(fileext = "jpg")
+        png(outfile)
+        pic <- image_read(url)
+        print(pic)
+        dev.off()
+        
+        # return a list
+        list(src = outfile)
+    }, deleteFile = TRUE)
 
     output$bars <- renderPlot({
         

@@ -57,3 +57,30 @@ jotify_vbar_binned <- function(data,
 #           color = "white",
 #           nudge_x = nudge_x) +
 
+
+jotify_loudness_overtime <- function(data, song_name) {
+  
+  # the pluck(1) both gets us down from a list item to a data frame
+  # while also ensuring we only pick one data frame, in the casee the song_name
+  # has duplicate entries
+  reference <- data %>% filter(track.name == song_name) %>% .$sections %>% pluck(1)
+  if (is.null(reference)) return("No data to display")
+  
+  # get loudness for a particular second, with reference to a reference dataset
+  get_loudness_at_second <- function(x) {
+    map_dbl(x,~(.x >= reference$start) %>% which() %>% max() %>% reference[[., "loudness"]])
+  }
+  
+  plot_data <- tibble(
+    second = 1:trunc(max(reference$start)),
+    loudness = get_loudness_at_second(second)
+    )
+  
+  plot_data %>%
+    ggplot() +
+    geom_ribbon(mapping = aes(x = second,
+                              ymin = -30,
+                              ymax = loudness)) +
+    ylim(-30, 0)
+}
+

@@ -31,7 +31,7 @@ ui <- fluidPage(
                                      multiple = FALSE),
                          numericInput("body_size",
                                       label = "Data label font size",
-                                      value = 12,
+                                      value = 9,
                                       min = 1,
                                       max = 20)
                      ),
@@ -44,7 +44,7 @@ ui <- fluidPage(
         tabPanel("Overtime",
                  
                  # Page description
-                 titlePanel("How does a feature change over the length of the song?"),
+                 titlePanel("How does 'loudness' change over the length of the song?"),
                  
                  sidebarLayout(
                      sidebarPanel(
@@ -52,25 +52,11 @@ ui <- fluidPage(
                          selectInput("song",
                                      label = "Song:",
                                      choices = unique(final_data$track.name),
-                                     multiple = FALSE),
-                         # feature names
-                         selectInput("feature",
-                                     label = "Feature:",
-                                     choices = c("danceability", "energy", "loudness", 
-                                                 "speechiness", "acousticness", "instrumentalness", 
-                                                 "liveness", "valence", "tempo"),
-                                     selected = "danceability",
-                                     multiple = FALSE),
-                         # font size for the body of the plot
-                         numericInput("body_size",
-                                      label = "Data label font size",
-                                      value = 12,
-                                      min = 1,
-                                      max = 20)
+                                     multiple = FALSE)
                          ),
                      # Show a plot of the generated distribution
                      mainPanel(
-                         textOutput("coming_soon")
+                         plotOutput("loudness_overtime")
                          )
                      )
                  ),
@@ -92,8 +78,10 @@ server <- function(input, output) {
                         body_size = input$body_size)
     })
     
-    output$coming_soon <- renderText({
-        "These plots are currently under development - stay tuned!"
+    output$loudness_overtime <- renderPlot({
+        
+        final_data %>%
+            jotify_loudness_overtime(., song_name = input$song)
         })
     
     output$author_description <- renderPrint({

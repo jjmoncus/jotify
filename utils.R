@@ -46,8 +46,12 @@ theme_jotify <- function(head_size = 12,
           axis.line.y = if (y_axis) basic_line else element_blank(),
           axis.ticks.y = element_blank(),
           axis.ticks.length =  unit(6, "pt"),
-          axis.text.x =  if (x_axis) element_text(family = family,  size = body_size, hjust = .5, vjust = .5) else element_blank(),
-          axis.text.y =  if (y_axis) element_text(family = family, size = body_size, hjust = 1, vjust = 0.5) else element_blank(),
+          axis.text.x = if (x_axis) {
+            element_text(family = family,  size = body_size, hjust = .5, vjust = .5)
+            } else {element_blank()},
+          axis.text.y = if (y_axis) {
+            element_text(family = family, size = body_size, hjust = 1, vjust = 0.5)
+            } else {element_blank()},
           axis.title =  element_blank(),
     
           # Adjust panel attributes

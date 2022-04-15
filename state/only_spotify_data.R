@@ -18,7 +18,7 @@ recently_played <- get_my_recently_played(limit = 50) %>% as_tibble()
 recently_played_small <- recently_played %>%
   mutate(artist.name = map_chr(track.artists, function(x) x$name[1]),
          played_at = as_datetime(played_at)) %>% 
-  select(track.id, track.name, artist.name, track.album.name, played_at) %>%
+  select(track.id, track.name, artist.name, track.album.name, played_at, track.album.images) %>%
   mutate(track.name = gsub("[\u2018\u2019\u201A\u201B\u2032\u2035]", "'", track.name)) %>%
   mutate(artist.name = gsub("[\u2018\u2019\u201A\u201B\u2032\u2035]", "'", artist.name))
 

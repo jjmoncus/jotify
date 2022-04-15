@@ -87,3 +87,17 @@ final_data %>%
 # 
 # final_data$played_at
 
+
+# most played song recently?
+
+final_data %>%
+  group_by(track.id) %>%
+  summarise(n = n(),
+            track.name = track.name,
+            artist.name = artist.name) %>%
+  distinct() %>%
+  arrange(desc(n)) %>%
+  pull(track.id) -> most_played_ids
+
+final_data %>% names()
+

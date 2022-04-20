@@ -58,7 +58,7 @@ jotify_vbar_binned <- function(data,
 #           nudge_x = nudge_x) +
 
 
-jotify_loudness_overtime <- function(data, song_name) {
+jotify_loudness_overtime <- function(data, song_name, lower_bound = -40) {
   
   # the pluck(1) both gets us down from a list item to a data frame
   # while also ensuring we only pick one data frame, in the casee the song_name
@@ -66,7 +66,7 @@ jotify_loudness_overtime <- function(data, song_name) {
   reference <- data %>% filter(track.name == song_name) %>% .$sections %>% pluck(1)
   if (is.null(reference)) return("No data to display")
   
-  # get loudness for a particular second, with reference to a reference dataset
+  # get loudness for a particular second, with reference to a reference datasets
   get_loudness_at_second <- function(x) {
     map_dbl(x,~(.x >= reference$start) %>% which() %>% max() %>% reference[[., "loudness"]])
   }
@@ -76,11 +76,43 @@ jotify_loudness_overtime <- function(data, song_name) {
     loudness = get_loudness_at_second(second)
     )
   
+  boundaries <- c(min(plot_data$loudness), max(plot_data$loudness))
+  midpoint <- mean(boundaries)
+  
   plot_data %>%
     ggplot() +
     geom_ribbon(mapping = aes(x = second,
-                              ymin = -30,
-                              ymax = loudness)) +
-    ylim(-30, 0)
+                              ymin = lower_bound,
+                              ymax = loudness),
+                fill = "darkred") +
+    ylim(lower_bound, 0) +
+    theme_jotify(family = "Times New Roman",
+                 legend = FALSE)
+}
+
+
+jotify_basic_bars <- function(data,
+                              var,
+                              high_to_low = TRUE) {
+  
+  quo_var <- enquo(var)
+  
+  if (high_to_low) reordered <- expr(reorder(song_text, !!quo_var))
+  else reordered <- expr(reorder(song_text, -!!quo_var))
+  
+  # arbitrary nudge constant relative to axis length that I think looks good
+  nudge <- data %>% pull(!!quo_var) %>% max()/80
+  
+  data %>% 
+    mutate(song_text = glue("{track.name} - {artist.name}")) %>%
+    ggplot(aes(x = !!quo_var,
+               y = eval(reordered))) +
+    geom_col(fill = "darkred") +
+    geom_text(mapping = aes(label = !!quo_var),
+              size = 12/(.pt),
+              color = "black",
+              nudge_x = nudge) +
+    theme_jotify(family = "Times New Roman",
+                 body_size = 12)
 }
 

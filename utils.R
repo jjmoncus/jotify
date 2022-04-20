@@ -7,7 +7,8 @@ theme_jotify <- function(head_size = 12,
                          body_size = 9, 
                          family = "Franklin",
                          x_axis = TRUE,
-                         y_axis = TRUE) {
+                         y_axis = TRUE,
+                         legend = TRUE) {
   
   basic_line <- element_line(color = "#A4A4A4", size = .2)
   
@@ -33,9 +34,9 @@ theme_jotify <- function(head_size = 12,
                                        vjust = 0),
           # Set up legends
           legend.title =  element_blank(),
-          legend.margin=  margin(0,0,0,0),
-          legend.position = "bottom",
-          legend.box.margin=  margin(-5,-10, 0,-10),
+          legend.margin=  if (legend) margin(0,0,0,0) else element_blank(),
+          legend.position = if (legend) "bottom" else "none",
+          legend.box.margin = if (legend) margin(-5,-10, 0,-10) else element_blank(),
           
           # Set up facet labels
           strip.background =  element_blank(),
@@ -122,3 +123,17 @@ pull_image_url <- function(data, song_name, size = c("small, medium", "large")) 
     slice(size) %>% 
     pull(url)
 }
+
+
+
+deep_cuts_df <- function(data) {
+  
+  data %>%
+    select(track.popularity,
+           track.name,
+           artist.name) %>%
+    distinct() %>%
+    arrange(track.popularity) %>%
+    head(n = 5)
+}
+

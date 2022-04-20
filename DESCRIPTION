@@ -1,0 +1,22 @@
+Package: jotify
+Title: Charts and Utilities for the Moodring Web Application
+Version: 0.0.0.9000
+Authors@R: 
+    person("J.J.", 
+    "Moncus", , 
+    "jjmoncus706@gmail.com", 
+    role = c("aut", "cre"),
+    comment = c(ORCID = "YOUR-ORCID-ID"))
+Description: This package holds boutique chart and utilities functions used throughout the 
+  Moodring web application, an app that provides real-time analysis of J.J.'s recent Spotify
+  listening history.
+License: GPL (>= 2)
+Encoding: UTF-8
+Roxygen: list(markdown = TRUE)
+RoxygenNote: 7.1.2
+Suggests: 
+    testthat (>= 3.0.0)
+Config/testthat/edition: 3
+Imports: 
+    magrittr,
+    tibble
